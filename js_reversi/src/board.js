@@ -83,14 +83,15 @@ Board.prototype.isOccupied = function (pos) {
  *
  * Returns empty array if no pieces of the opposite color are found.
  */
-Board.prototype._positionsToFlip = function(pos, color, dir){
+Board.prototype._positionsToFlip = function(pos, color, dir, piecesToFlip = []){
   let newPos = [pos[0] + dir[0], pos[1] + dir[1]];
-  if (!this.isValidPos(newPos) || !this.isOccupied(newPos) || this.isMine(newPos, color) ) {
+  if (!this.isValidPos(newPos) || !this.isOccupied(newPos)) {
     return [];
+  } else if ( !this.isMine(newPos, color) ) {
+    piecesToFlip.push(newPos);
+    return this._positionsToFlip(newPos, color, dir, piecesToFlip);
   } else {
-    let result = this._positionsToFlip(newPos, color, dir);
-    result.unshift(newPos);
-    return result;
+    return piecesToFlip;
   }
 };
 
@@ -103,18 +104,10 @@ Board.prototype.validMove = function (pos, color) {
   if (this.isOccupied(pos)) {
     return false;
   }
-  // return Board.DIRS.some(dir => {
-  //   let positions = this._positionsToFlip(pos, color, dir);
-  //   console.log(positions.length);
-  //   return positions.length > 0;
-  // })
-  let result = false;
-  Board.DIRS.forEach(dir => {
+  return Board.DIRS.some(dir => {
     let positions = this._positionsToFlip(pos, color, dir);
-    console.log(positions.length);
-    if (positions.length > 0) result = true;
+    return positions.length > 0;
   })
-  return result;
 };
 
 /**
@@ -124,7 +117,21 @@ Board.prototype.validMove = function (pos, color) {
  * Throws an error if the position represents an invalid move.
  */
 Board.prototype.placePiece = function (pos, color) {
-};
+  if (this.validMove(pos, color)) {
+    this.grid[pos[0]][pos[1]] = new Piece(color)
+  } else {
+    throw new Error('Invalid move!');
+  }
+  Board.DIRS.forEach(dir => {
+    // debugger;
+    let positions = this._positionsToFlip(pos, color, dir);
+    positions.forEach(posit => {
+      let piece = this.getPiece(posit);
+      piece.flip;
+      console.log(this.grid)
+    })
+  })
+}
 
 /**
  * Produces an array of all valid positions on
